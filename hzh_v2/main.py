@@ -42,6 +42,9 @@ class MyAlgV2:
                 # TODO: Implement evolutionary process
                 pass
 
+            if (generation + 1) % 10 == 0:
+                plot_population(lower_bound, upper_bound, population, f"Population (Gen {generation})")
+
         plot_population(lower_bound, upper_bound, population, 'Final population')
 
         return population
@@ -49,14 +52,34 @@ class MyAlgV2:
 
 class MyAlgV2FitnessSharing(MyAlgV2):
 
-    def __init__(self, sigma_share, alpha):
+    def __init__(self, sigma_share, alpha, distance_p, raw_fitness_scaling_beta):
         super().__init__()
+
+        self.distance_p = distance_p
         self.sigma_share = sigma_share  # Sharing distance
         self.alpha = alpha  # Sharing exponent
+        self.raw_fitness_scaling_beta = raw_fitness_scaling_beta
 
-    def adjust_fitness(self, population, original_fitness):
+    def adjust_fitness(self, population: np.ndarray, original_fitness: np.ndarray):
         # TODO: Implement fitness sharing
-        adjusted_fitness = None
+
+        population_size = original_fitness.shape[0]
+
+        # distance_matrix = np.matmul(
+        #     population.reshape([population_size, 1]),
+        #     population.reshape([1, population_size]),
+        # )
+        denominator = np.zeros(shape=(population_size,))
+        for i1 in range(0, population_size):
+            for i2 in range(i1+1, population_size):
+                distance = np.power(np.sum(np.power(population[i1] - population[i2], self.distance_p)), 1.0/self.distance_p)
+                if distance < self.sigma_share:
+                    sh = 1 - np.power(distance / sigma_share, self.alpha)
+                    denominator[i1] += sh
+                    denominator[i2] += sh
+
+        adjusted_fitness = np.power(original_fitness, self.raw_fitness_scaling_beta) / denominator
+
         return adjusted_fitness
 
 
@@ -79,11 +102,13 @@ mutation_rate = 0.1
 
 sigma_share = 0.1
 alpha = 1
+distance_p = 2  # Lp distance
+raw_fitness_scaling_beta = 1
 
 
 if __name__ == '__main__':
 
-    # my_alg = MyAlgV2FitnessSharing(sigma_share, alpha)
+    # my_alg = MyAlgV2FitnessSharing(sigma_share, alpha, distance_p, raw_fitness_scaling_beta)
     my_alg = MyAlgV2Crowding()
 
     population = my_alg.run_genetic_algorithm(population_size, generations, lower_bound, upper_bound, mutation_rate)

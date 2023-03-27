@@ -33,7 +33,7 @@ class MyAlg:
     def run_genetic_algorithm(self, population_size, generations, lower_bound, upper_bound, mutation_rate):
         pass
 
-    def plot_population(population, generation):
+    def plot_population(self, population, generation):
         x = np.linspace(lower_bound, upper_bound, 1000)
         y = objective_function(x)
         plt.plot(x, y, label="Objective function")
